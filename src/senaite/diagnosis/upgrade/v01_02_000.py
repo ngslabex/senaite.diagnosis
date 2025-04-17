@@ -18,25 +18,30 @@
 # Copyright 2022-2025 by it's authors.
 # Some rights reserved, see README and LICENSE.
 
-from bika.lims.api import get_portal
-from senaite.diagnosis import is_installed
+from senaite.core.upgrade import upgradestep
+from senaite.core.upgrade.utils import UpgradeUtils
 from senaite.diagnosis import logger
-from senaite.diagnosis.setuphandlers import add_setup_folders
-from senaite.diagnosis.setuphandlers import setup_navigation_types
-from senaite.diagnosis.setuphandlers import setup_workflows
+from senaite.diagnosis import PRODUCT_NAME
+
+version = "1200"
+profile = "profile-{0}:default".format(PRODUCT_NAME)
 
 
-def afterUpgradeStepHandler(event):
-    """Event handler that is executed after running an upgrade step of senaite.core
-    """
-    if not is_installed():
-        return
+@upgradestep(PRODUCT_NAME, version)
+def upgrade(tool):
+    portal = tool.aq_inner.aq_parent
+    ut = UpgradeUtils(portal)
+    ver_from = ut.getInstalledVersion(PRODUCT_NAME)
 
-    logger.info("Run senaite.diagnosis.afterUpgradeStepHandler ...")
+    if ut.isOlderVersion(PRODUCT_NAME, version):
+        logger.info("Skipping upgrade of {0}: {1} > {2}".format(
+            PRODUCT_NAME, ver_from, version))
+        return True
 
-    portal = get_portal()
-    add_setup_folders(portal)
-    setup_navigation_types(portal)
-    setup_workflows(portal)
+    logger.info("Upgrading {0}: {1} -> {2}".format(PRODUCT_NAME, ver_from,
+                                                   version))
 
-    logger.info("Run senaite.diagnosis.afterUpgradeStepHandler [DONE]")
+    # -------- ADD YOUR STUFF BELOW --------
+
+    logger.info("{0} upgraded to version {1}".format(PRODUCT_NAME, version))
+    return True
